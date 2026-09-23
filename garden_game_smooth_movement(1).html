@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Garden Game</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#18251b;font-family:system-ui,sans-serif;color:#fff;display:grid;place-items:center;min-height:100vh}
+#game{position:relative;width:min(1000px,96vw);aspect-ratio:16/10;overflow:hidden;border:5px solid #17351d;border-radius:18px;background:#67b94d;box-shadow:0 14px 45px #0008}
+#game:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,#fff2 0 2%,transparent 3%),radial-gradient(circle at 75% 75%,#0001 0 3%,transparent 4%);background-size:100px 100px}
+.plot{position:absolute;left:54%;width:38%;height:25%;background:#7b542d;border:7px dashed #d8b47b;border-radius:15px;box-shadow:inset 0 0 0 5px #55391e;z-index:2}
+#plot1{top:21%}#plot2{top:51%}
+.zone{position:absolute;background:#8a5a2b;border:4px solid #4e3019;border-radius:12px;box-shadow:0 5px 0 #0003;padding:12px;text-align:center;z-index:8}
+#shop{left:4%;top:9%;width:24%;height:23%}#sell{left:4%;top:68%;width:24%;height:16%}
+.stallRoof{font-size:28px;font-weight:900}.zone button,.admin button{border:0;border-radius:9px;padding:9px 12px;font-weight:800;cursor:pointer;background:#f3c95d;color:#38260e;margin-top:8px}.zone button:hover,.admin button:hover{filter:brightness(1.08)}
+#hud{position:absolute;left:3%;top:3%;z-index:20;background:#17331dcc;padding:8px 12px;border-radius:12px;font-weight:800}
+#player{position:absolute;left:42%;top:47%;width:42px;height:55px;z-index:15;will-change:left,top,transform;transform-origin:center bottom}
+.farmerHead{position:absolute;left:10px;top:6px;width:23px;height:23px;border-radius:50%;background:#e8ae78;border:2px solid #60391f}.farmerHair{position:absolute;left:9px;top:4px;width:25px;height:9px;background:#5b351e;border-radius:12px 12px 3px 3px}.farmerHat{position:absolute;left:3px;top:0;width:38px;height:7px;background:#d6a43c;border-radius:8px}.farmerBody{position:absolute;left:8px;top:28px;width:27px;height:22px;background:#4f86c6;border-radius:7px}.farmerStrap{position:absolute;left:11px;top:29px;width:5px;height:20px;background:#7a4d2b;transform:rotate(12deg)}.farmerArm{position:absolute;top:31px;width:8px;height:18px;background:#e8ae78;border-radius:6px}.farmerArm.a{left:2px;transform:rotate(10deg)}.farmerArm.b{right:2px;transform:rotate(-10deg)}.farmerLeg{position:absolute;top:48px;width:9px;height:7px;background:#44352c;border-radius:4px}.farmerLeg.a{left:10px}.farmerLeg.b{right:10px}
+#eggLayer,#cropLayer,#petLayer{position:absolute;inset:0;pointer-events:none;z-index:14}.thing{position:absolute;transform:translate(-50%,-50%);text-align:center;pointer-events:auto}.egg{font-size:28px;filter:drop-shadow(0 2px 1px #0008)}.egg small,.crop small{display:block;font-size:10px;background:#17331dcc;border-radius:6px;padding:1px 4px;white-space:nowrap}.crop{font-size:27px}.pet{font-size:28px;transition:left 1.2s linear,top 1.2s linear}.dragonPet{font-size:36px;filter:drop-shadow(0 3px 2px #0008)}.dragonPet:before{content:"🪽";font-size:20px;position:absolute;left:-14px;top:10px}.dragonPet:after{content:"🪽";font-size:20px;position:absolute;right:-14px;top:10px}.crown{font-size:13px;display:block;margin-bottom:-8px}
+.modal{position:absolute;inset:8% 8%;z-index:50;background:#21451f;display:none;border:5px solid #a6d76e;border-radius:18px;padding:18px;box-shadow:0 20px 60px #000b}.modal.open{display:block}.modal h2{margin:0 0 10px}.close{float:right;background:#d55!important;color:#fff!important}.tabs button{background:#86c957;color:#163015;border:0;padding:8px 12px;border-radius:8px;font-weight:800;margin-right:6px;cursor:pointer}.tab{display:none;margin-top:12px;max-height:62%;overflow:auto}.tab.active{display:block}.item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#ffffff14;padding:9px;margin:6px 0;border-radius:10px}.item button{margin:0}.admin{position:absolute;inset:7%;z-index:100;background:#151b16;border:4px solid #f0c957;border-radius:16px;padding:18px;display:none;box-shadow:0 20px 70px #000}.admin.open{display:block}.admin h2{color:#f0c957}.adminGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.admin input{width:100%;padding:10px;border-radius:8px;border:0;margin:5px 0}.eggPicker{display:none;background:#263b27;border:2px solid #7da95b;border-radius:12px;padding:10px;margin-top:8px;max-height:210px;overflow:auto}.eggPicker.open{display:block}.eggChoice{display:flex;justify-content:space-between;align-items:center;background:#ffffff12;padding:7px;border-radius:8px;margin:5px 0}.eggChoice button{margin:0;padding:7px 9px}.hint{font-size:12px;opacity:.75;margin-top:10px}
+
+#inventoryBtn{position:absolute;right:3%;top:3%;z-index:25;border:0;border-radius:12px;padding:9px 13px;font-weight:900;cursor:pointer;background:#f4d35e;color:#38260e;box-shadow:0 4px 0 #8b6418}
+#inventoryBtn:hover{transform:translateY(-1px)}
+.inventoryModal{inset:12% 25%;z-index:60}
+#inventoryList{max-height:65%;overflow:auto}
+.inventoryRow{display:flex;justify-content:space-between;align-items:center;background:#ffffff12;border-radius:10px;padding:10px;margin:7px 0}
+.inventoryEmpty{padding:25px;text-align:center;opacity:.8}
+
+.admin{position:absolute;inset:5%;z-index:100;background:linear-gradient(135deg,#21133d,#132c4f 42%,#123b2b 100%);border:4px solid transparent;border-radius:22px;padding:0;display:none;box-shadow:0 25px 80px #000b;overflow:hidden}
+.admin.open{display:block}
+.admin:before{content:"";position:absolute;inset:0;padding:3px;border-radius:22px;background:linear-gradient(90deg,#ff3b8d,#ff9f43,#ffe45c,#55e878,#43d9ff,#8c63ff,#ff3b8d);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.adminHeader{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;padding:18px 22px;background:linear-gradient(90deg,#ff3b8d55,#ffb43b44,#4de1ff44,#a25dff55);border-bottom:1px solid #ffffff25}
+.adminRainbowTitle{font-size:28px;font-weight:1000;letter-spacing:1px;background:linear-gradient(90deg,#ff5aa5,#ffc14d,#67f58a,#54dfff,#b278ff);-webkit-background-clip:text;color:transparent;text-shadow:0 0 18px #fff3}
+.adminSubtitle{font-size:12px;opacity:.72;margin-top:2px}
+.adminClose{border:0!important;background:#ff4f7188!important;color:white!important;width:36px;height:36px;border-radius:50%!important;font-size:25px!important;padding:0!important;margin:0!important;cursor:pointer}
+.adminBody{position:relative;z-index:1;padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;max-height:72%;overflow:auto}
+.adminCard{display:flex;gap:12px;align-items:flex-start;padding:13px;border-radius:15px;background:#ffffff10;border:1px solid #ffffff20;box-shadow:inset 0 1px #fff1}
+.adminCard:nth-child(1){border-color:#ff63a866;background:#ff3b8d12}
+.adminCard:nth-child(2){border-color:#62f07b66;background:#55e87810}
+.adminCard:nth-child(3){border-color:#ffd65d77;background:#ffe45c12}
+.adminCard:nth-child(4){border-color:#50dcff77;background:#43d9ff12}
+.adminCard:nth-child(5){border-color:#a875ff77;background:#8c63ff12}.adminCard.petCard{border-color:#ff7be777;background:#ff63e712}
+.cardIcon{font-size:28px;width:38px;text-align:center}
+.cardContent{flex:1}
+.cardContent h3{margin:0 0 3px;font-size:16px}.cardContent p{margin:0 0 8px;font-size:11px;opacity:.72}
+.admin button{border:0;border-radius:9px;padding:8px 10px;font-weight:850;cursor:pointer;margin:0;background:linear-gradient(90deg,#ff6bb5,#ffbe55,#65e78b,#55dfff,#9b70ff);color:#14151a}
+.inlineControls{display:flex;gap:6px}.inlineControls input{min-width:0;flex:1;padding:8px;border:0;border-radius:8px;background:#fff;color:#111}
+.eggPicker{display:none;background:#101a20ee;border:1px solid #ffffff22;border-radius:10px;padding:7px;margin-top:8px;max-height:180px;overflow:auto}
+.eggPicker.open{display:block}
+.eggChoice{display:flex;justify-content:space-between;align-items:center;background:#ffffff0d;padding:7px;border-radius:8px;margin:4px 0;font-size:12px}
+.eggChoice button{margin:0;padding:6px 9px}
+.adminFooter{position:absolute;z-index:1;left:0;right:0;bottom:0;padding:9px;text-align:center;background:#0003;font-size:11px;opacity:.65}
+@media(max-width:700px){.adminBody{grid-template-columns:1fr}.inventoryModal{inset:10% 10%}.adminRainbowTitle{font-size:22px}}
+
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="hud">💰 $<span id="money">500</span></div>
+<button id="inventoryBtn" onclick="openInventory()">🎒 Open Inventory</button>
+
+  <div id="shop" class="zone"><div class="stallRoof">🛒 Seed & Egg Shop</div><button onclick="openShop()">Open Shop</button></div>
+  <div id="sell" class="zone"><div class="stallRoof">💰 Sell</div><button onclick="sellCrop()">Sell Harvest</button></div>
+
+  <div id="plot1" class="plot"></div><div id="plot2" class="plot"></div>
+  <div id="eggLayer"></div><div id="cropLayer"></div><div id="petLayer"></div>
+  <div id="player"><div class="farmerHat"></div><div class="farmerHair"></div><div class="farmerHead"></div><div class="farmerBody"></div><div class="farmerStrap"></div><div class="farmerArm a"></div><div class="farmerArm b"></div><div class="farmerLeg a"></div><div class="farmerLeg b"></div></div>
+
+
+  <div id="inventoryModal" class="modal inventoryModal">
+    <button class="close" onclick="closeInventory()">Close</button>
+    <h2>🎒 Inventory</h2>
+    <div id="inventoryList"></div>
+  </div>
+
+  <div id="shopModal" class="modal">
+    <button class="close" onclick="closeShop()">Close</button><h2>Shop</h2>
+    <div class="tabs"><button onclick="showTab('seeds')">Seeds & Crops</button><button onclick="showTab('eggs')">Pet Eggs</button></div>
+    <div id="seeds" class="tab active"></div><div id="eggs" class="tab"></div>
+  </div>
+
+
+  <div id="admin" class="admin">
+    <div class="adminHeader">
+      <div>
+        <div class="adminRainbowTitle">⚡ ADMIN PANEL ⚡</div>
+        <div class="adminSubtitle">Rainbow Control Center</div>
+      </div>
+      <button class="adminClose" onclick="closeAdmin()">×</button>
+    </div>
+
+    <div class="adminBody">
+      <section class="adminCard moneyCard">
+        <div class="cardIcon">💰</div>
+        <div class="cardContent">
+          <h3>Give Money</h3>
+          <p>Add up to $6,000,000,000</p>
+          <div class="inlineControls">
+            <input id="moneyInput" type="number" min="0" max="6000000000" placeholder="Amount">
+            <button onclick="giveMoney()">Give</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="adminCard seedCard">
+        <div class="cardIcon">🌱</div>
+        <div class="cardContent">
+          <h3>Admin Seeds</h3>
+          <p>Choose a seed, including the admin-only Candy Blossom.</p>
+          <button onclick="toggleSeedPicker()">Choose Seed ▾</button>
+          <div id="seedPicker" class="eggPicker"></div>
+        </div>
+      </section>
+
+      <section class="adminCard eggCard">
+        <div class="cardIcon">🥚</div>
+        <div class="cardContent">
+          <h3>Free Pet Egg</h3>
+          <p>Choose exactly which egg you want.</p>
+          <button onclick="toggleEggPicker()">Choose Egg ▾</button>
+          <div id="eggPicker" class="eggPicker"></div>
+        </div>
+      </section>
+
+      <section class="adminCard hatchCard">
+        <div class="cardIcon">⏩</div>
+        <div class="cardContent">
+          <h3>Egg Controls</h3>
+          <p>Instantly hatch every egg currently in your garden.</p>
+          <button onclick="skipEggs()">Skip Egg Hatch</button>
+        </div>
+      </section>
+
+      <section class="adminCard petCard">
+        <div class="cardIcon">🐾</div>
+        <div class="cardContent">
+          <h3>Select Pet</h3>
+          <p>Choose a pet to add directly to your garden.</p>
+          <button onclick="togglePetPicker()">Choose Pet ▾</button>
+          <div id="petPicker" class="eggPicker"></div>
+        </div>
+      </section>
+
+      <section class="adminCard monkeyCard">
+        <div class="cardIcon">👑</div>
+        <div class="cardContent">
+          <h3>Secret Pet</h3>
+          <p>Unlock the exclusive Jandel Monkey.</p>
+          <button onclick="getJandel()">Get Jandel Monkey</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="adminFooter">Private admin controls • Press 0 to open</div>
+  </div>
+</div>
+
+<script>
+const crops=[
+ {name:"Carrot",price:25,time:8,sell:60,icon:"🥕"},
+ {name:"Strawberry",price:50,time:12,sell:100,icon:"🍓"},
+ {name:"Corn",price:75,time:16,sell:150,icon:"🌽"},
+ {name:"Tomato",price:100,time:20,sell:200,icon:"🍅"},
+ {name:"Pumpkin",price:250,time:28,sell:500,icon:"🎃"},
+ {name:"Watermelon",price:400,time:36,sell:800,icon:"🍉"}
+];
+const eggTypes=[
+ {name:"Basic Egg",icon:"🥚",pet:"🐥"},
+ {name:"Garden Egg",icon:"🥚",pet:"🐰"},
+ {name:"Bug Egg",icon:"🥚",pet:"🐝"},
+ {name:"Flower Egg",icon:"🥚",pet:"🦋"},
+ {name:"Rare Egg",icon:"🥚",pet:"🦊"},
+ {name:"Legendary Egg",icon:"🥚",pet:"🐲"}
+];
+const adminSeeds=[...crops,{name:"Candy Blossom",price:0,time:45,sell:1500,icon:"🍬🌸",admin:true}];
+const selectablePets=[
+ {name:"Chick",icon:"🐥",egg:0},
+ {name:"Bunny",icon:"🐰",egg:1},
+ {name:"Bee",icon:"🐝",egg:2},
+ {name:"Butterfly",icon:"🦋",egg:3},
+ {name:"Fox",icon:"🦊",egg:4},
+ {name:"Dragon",icon:"🐉",egg:5}
+];
+let money=500, harvested=0, eggs=[], pets=[], jandel=false;
+const $=id=>document.getElementById(id);
+function updateMoney(){$("money").textContent=Math.floor(money).toLocaleString()}
+function openInventory(){$("inventoryModal").classList.add("open");renderInventory()}
+function closeInventory(){$("inventoryModal").classList.remove("open")}
+function renderInventory(){
+ let rows=[];
+ if(harvested) rows.push(`<div class="inventoryRow"><span>💰 Harvest value ready to sell</span><b>$${harvested.toLocaleString()}</b></div>`);
+ if(eggs.length) eggs.forEach(e=>rows.push(`<div class="inventoryRow"><span>🥚 ${eggTypes[e.i].name}</span><b>${e.left}s</b></div>`));
+ if(pets.length) pets.forEach(p=>rows.push(`<div class="inventoryRow"><span>🐾 Pet</span><b>Owned</b></div>`));
+ if(jandel) rows.push(`<div class="inventoryRow"><span>👑 Jandel Monkey</span><b>Owned</b></div>`);
+ $("inventoryList").innerHTML=rows.length?rows.join(""):`<div class="inventoryEmpty">Your inventory is empty.</div>`;
+}
+function openShop(){$("shopModal").classList.add("open");renderShop()}
+function closeShop(){$("shopModal").classList.remove("open")}
+function showTab(t){document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));$(t).classList.add("active")}
+function renderShop(){
+ $("seeds").innerHTML=crops.map((c,i)=>`<div class="item"><span>${c.icon} ${c.name} — $${c.price}</span><button onclick="buySeed(${i})">Buy</button></div>`).join("");
+ $("eggs").innerHTML=eggTypes.map((e,i)=>`<div class="item"><span>${e.icon} ${e.name} — $${[150,300,500,800,1500,3000][i]}</span><button onclick="buyEgg(${i})">Buy</button></div>`).join("");
+}
+function buySeed(i){if(money<crops[i].price)return;money-=crops[i].price;updateMoney();plantCrop(i)}
+function plantCrop(i){const c=crops[i],p=plotPos(),el=document.createElement("div");el.className="thing crop";el.style.left=p.x+"%";el.style.top=p.y+"%";el.innerHTML=`${c.icon}<small>${c.name} ${c.time}s</small>`;$("cropLayer").appendChild(el);let left=c.time;const timer=setInterval(()=>{left--;el.querySelector("small").textContent=left>0?`${c.name} ${left}s`:`${c.name} READY`;if(left<=0){clearInterval(timer);el.onclick=()=>{harvested+=c.sell;el.remove()};}},1000)}
+function sellCrop(){if(harvested){money+=harvested;harvested=0;updateMoney();renderInventory()}}
+function buyEgg(i){const prices=[150,300,500,800,1500,3000];if(money<prices[i])return;money-=prices[i];updateMoney();addEgg(i)}
+function plotPos(){return Math.random()<.5?{x:58+Math.random()*31,y:25+Math.random()*17}:{x:58+Math.random()*31,y:55+Math.random()*17}}
+function addEgg(i,free=false){const e=eggTypes[i],p=plotPos(),el=document.createElement("div");el.className="thing egg";el.style.left=p.x+"%";el.style.top=p.y+"%";el.innerHTML=`${e.icon}<small>${e.name} 38s</small>`;$("eggLayer").appendChild(el);const obj={i,el,left:38};eggs.push(obj);const timer=setInterval(()=>{obj.left--;el.querySelector("small").textContent=obj.left>0?`${e.name} ${obj.left}s`:`Hatching...`;if(obj.left<=0){clearInterval(timer);hatch(obj)}},1000);obj.timer=timer;renderInventory()}
+function hatch(obj){obj.el.remove();eggs=eggs.filter(x=>x!==obj);spawnPet(obj.i);renderInventory()}
+function spawnPet(i){const e=eggTypes[i],p=plotPos(),el=document.createElement("div");el.className="thing pet"+(i===5?" dragonPet":"");el.style.left=p.x+"%";el.style.top=p.y+"%";el.innerHTML=i===5?"🐉":e.pet;el.title=i===5?"Dragon":e.name;$("petLayer").appendChild(el);pets.push(el);renderInventory()}
+function skipEggs(){[...eggs].forEach(hatch);renderInventory()}
+function toggleEggPicker(){ $("eggPicker").classList.toggle("open") }
+function renderEggPicker(){$("eggPicker").innerHTML=eggTypes.map((e,i)=>`<div class="eggChoice"><span>${e.icon} ${e.name} → ${e.pet}</span><button onclick="adminGiveEgg(${i})">Give</button></div>`).join("")}
+function adminGiveEgg(i){addEgg(i,true);$("eggPicker").classList.remove("open");renderInventory()}
+function freeSeed(){plantCrop(0)}
+function toggleSeedPicker(){ $("seedPicker").classList.toggle("open"); renderSeedPicker(); }
+function renderSeedPicker(){
+ $("seedPicker").innerHTML=adminSeeds.map((s,i)=>`<div class="eggChoice"><span>${s.icon} ${s.name}${s.admin?" ✨":""}</span><button onclick="adminGiveSeed(${i})">Give</button></div>`).join("");
+}
+function adminGiveSeed(i){ plantCropData(adminSeeds[i]); $("seedPicker").classList.remove("open"); }
+function plantCropData(c){
+ const p=plotPos(),el=document.createElement("div"); el.className="thing crop";
+ el.style.left=p.x+"%"; el.style.top=p.y+"%"; el.innerHTML=`${c.icon}<small>${c.name} ${c.time}s</small>`;
+ $("cropLayer").appendChild(el); let left=c.time;
+ const timer=setInterval(()=>{left--;el.querySelector("small").textContent=left>0?`${c.name} ${left}s`:`${c.name} READY`;
+ if(left<=0){clearInterval(timer);el.onclick=()=>{harvested+=c.sell;el.remove();renderInventory()}}},1000);
+}
+function togglePetPicker(){ $("petPicker").classList.toggle("open"); renderPetPicker(); }
+function renderPetPicker(){
+ $("petPicker").innerHTML=selectablePets.map((p,i)=>`<div class="eggChoice"><span>${p.icon} ${p.name}</span><button onclick="adminGivePet(${i})">Give</button></div>`).join("");
+}
+function adminGivePet(i){spawnPet(selectablePets[i].egg);$("petPicker").classList.remove("open");}
+function giveMoney(){let n=Number($("moneyInput").value);if(Number.isFinite(n)&&n>=0){money=Math.min(6000000000,money+Math.floor(n));updateMoney();$("moneyInput").value=""}}
+function getJandel(){if(jandel)return;jandel=true;const p=plotPos(),el=document.createElement("div");el.className="thing pet";el.style.left=p.x+"%";el.style.top=p.y+"%";el.innerHTML=`<span class="crown">👑</span>🐒`;$("petLayer").appendChild(el);pets.push(el);renderInventory()}
+function openAdmin(){$("admin").classList.add("open");renderEggPicker();renderSeedPicker();renderPetPicker()}
+function closeAdmin(){$("admin").classList.remove("open")}
+const keys={};
+let moveX=0,moveY=0,lastMove=performance.now();
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="0"){openAdmin();return}
+  const k=e.key.toLowerCase();
+  if(["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k)){
+    keys[k]=true;
+    e.preventDefault();
+  }
+});
+document.addEventListener("keyup",e=>{
+  const k=e.key.toLowerCase();
+  if(["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].includes(k)){
+    keys[k]=false;
+    e.preventDefault();
+  }
+});
+
+function smoothMovement(now){
+  const dt=Math.min((now-lastMove)/1000,0.04);
+  lastMove=now;
+  if($("shopModal").classList.contains("open")||$("admin").classList.contains("open")){
+    requestAnimationFrame(smoothMovement);
+    return;
+  }
+
+  let dx=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+  let dy=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+
+  if(dx||dy){
+    const length=Math.hypot(dx,dy);
+    dx/=length; dy/=length;
+
+    const speed=34; // percent of the game width/height per second
+    let x=parseFloat($("player").style.left)||42;
+    let y=parseFloat($("player").style.top)||47;
+
+    x+=dx*speed*dt;
+    y+=dy*speed*dt;
+
+    x=Math.max(1,Math.min(96,x));
+    y=Math.max(1,Math.min(91,y));
+
+    $("player").style.left=x+"%";
+    $("player").style.top=y+"%";
+    $("player").style.transform=`scale(${dx<0?-1:1},1)`;
+  }
+
+  requestAnimationFrame(smoothMovement);
+}
+requestAnimationFrame(smoothMovement);
+setInterval(()=>{pets.forEach(p=>{let x=parseFloat(p.style.left),y=parseFloat(p.style.top);let nx=Math.max(57,Math.min(94,x+(Math.random()-.5)*7)),ny=Math.max(23,Math.min(76,y+(Math.random()-.5)*7));p.style.left=nx+"%";p.style.top=ny+"%";})},3500);
+updateMoney();renderShop();renderInventory();
+</script>
+</body>
+</html>
